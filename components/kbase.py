@@ -45,12 +45,15 @@ def parse_json(r: str) -> dict:
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON found in the input string: {e}")
 
+def normalize_text(text):
+    return re.sub(r'\W+', '_', text.lower())
+
 class KnowledgeBase():
-    def __init__(self, api_key, faq_document_path, embedding_model="models/text-embedding-004", cache_time=3600, force_update=False):
+    def __init__(self, api_key, faq_document_path, embedding_model="models/text-embedding-004", cache_time=3600*24, force_update=False):
         self.llm = LLM(api_key, temperature=0)
         self.embedding_model = embedding_model
 
-        file_name = os.path.splitext(os.path.basename(faq_document_path))[0]
+        file_name = normalize_text(os.path.splitext(os.path.basename(faq_document_path))[0])
         self.pickle_path = pickle_path.format(file_name)
         self.json_path = json_path.format(file_name)
 
