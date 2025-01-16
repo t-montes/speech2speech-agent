@@ -1,0 +1,15 @@
+# first, install [ffmpeg](https://phoenixnap.com/kb/ffmpeg-windows)
+
+# STT
+pydub
+numpy
+pyaudio
+git+https://github.com/openai/whisper.git
+
+# TTS
+elevenlabs
+
+# NLP
+google-generativeai
+
+python-dotenv
