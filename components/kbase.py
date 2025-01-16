@@ -48,12 +48,22 @@ def parse_json(r: str) -> dict:
 def normalize_text(text):
     return re.sub(r'\W+', '_', text.lower())
 
-class KnowledgeBase():
-    def __init__(self, api_key, faq_document_path, embedding_model="models/text-embedding-004", cache_time=3600*24, force_update=False):
-        self.llm = LLM(api_key, temperature=0)
-        self.embedding_model = embedding_model
+def replace_placeholders(placeholders, *texts):
+    def process(text):
+        for key, value in placeholders.items():
+            text = text.replace(f"[{key}]", value)
+        return text
 
-        file_name = normalize_text(os.path.splitext(os.path.basename(faq_document_path))[0])
+    result = [process(text) for text in texts]
+    return result[0] if len(texts) == 1 else result
+
+class KnowledgeBase():
+    def __init__(self, api_key, faq_document_path, placeholders={}, embedding_model="models/text-embedding-004", cache_time=3600*24, force_update=False):
+        genai.configure(api_key=api_key)
+        self.embedding_model = embedding_model
+        self.placeholders = placeholders
+
+        file_name = normalize_text(os.path.splitext(os.path.basename(faq_document_path))[0])[:20]
         self.pickle_path = pickle_path.format(file_name)
         self.json_path = json_path.format(file_name)
 
@@ -74,7 +84,9 @@ class KnowledgeBase():
         return numpy.array(embeddings)
     
     def create_knowledge_base(self, faq_document_path):
-        qa_text = self.llm(get_qa_prompt, faq_document_path)
+        doc_llm = LLM()
+        qa_text = doc_llm(get_qa_prompt, faq_document_path)
+        qa_text = replace_placeholders(self.placeholders, qa_text)
         qa_list = parse_json(qa_text)
 
         with open(self.json_path, "w") as f:
@@ -90,4 +102,4 @@ class KnowledgeBase():
         query_embedding = self.embed(query)
         similarities = (self.embeddings @ query_embedding.T).flatten()
         max_index = similarities.argmax()
-        return self.qa_list[max_index]["answer"]
+        return max(similarities), self.qa_list[max_index]["answer"]

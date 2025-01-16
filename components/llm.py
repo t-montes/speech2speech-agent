@@ -16,13 +16,14 @@ def get_document(document_path):
     }
 
 class LLM():
-    def __init__(self, api_key, model='gemini-1.5-flash', temperature=0.5):
-        genai.configure(api_key=api_key)
+    def __init__(self, api_key=None, model='gemini-1.5-flash', temperature=0, system_instruction=None):
+        if api_key: genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(
             model,
             generation_config={
                 "temperature": temperature
-            }
+            },
+            system_instruction=system_instruction
         )
     
     def __call__(self, prompt, document_path=None):

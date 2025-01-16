@@ -4,7 +4,7 @@ class TTS():
     def __init__(self, api_key):
         self.client = client.ElevenLabs(api_key=api_key)
     
-    def generate(self, text, voice="Brian"):
+    def generate(self, text, voice="Rachel"):
         audio = self.client.generate(text=text, voice=voice)
         return audio
     

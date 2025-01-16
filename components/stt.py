@@ -4,12 +4,16 @@ import pyaudio
 import whisper
 import io
 
+import warnings
+warnings.filterwarnings("ignore")
+
 class STT():
-    def __init__(self, model_size="small", chunk_size=1024, rate=16000, volume_floor=200):
+    def __init__(self, model_size="small", chunk_size=1024, rate=16000, volume_floor=200, do_print=False):
         self.model = whisper.load_model(model_size)
         self.chunk = chunk_size
         self.rate = rate
         self.volume_floor = volume_floor
+        self.do_print = do_print
         
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=pyaudio.paInt16, channels=1, rate=self.rate, input=True, frames_per_buffer=self.chunk)
@@ -19,6 +23,7 @@ class STT():
         silence_counter = 0
         recording_started = False
 
+        if self.do_print: print("Recording...")
         while True:
             data = self.stream.read(self.chunk)
             vol = np.max(np.abs(np.frombuffer(data, dtype=np.int16)))
@@ -45,7 +50,8 @@ class STT():
         return audio_array
     
     def transcribe(self, audio_array):
-        return self.model.transcribe(audio_array)['text']
+        if self.do_print: print("Transcribing...")
+        return self.model.transcribe(audio_array, language="en")['text']
     
     def __call__(self, silence_threshold=2):
         return self.transcribe(
