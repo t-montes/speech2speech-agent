@@ -17,16 +17,24 @@ class STT():
     def record(self, silence_threshold=2):
         frames = []
         silence_counter = 0
+        recording_started = False
 
         while True:
             data = self.stream.read(self.chunk)
-            frames.append(data)
-
             vol = np.max(np.abs(np.frombuffer(data, dtype=np.int16)))
-            if vol < self.volume_floor: silence_counter += 1
-            else: silence_counter = 0
 
-            if silence_counter > self.rate // self.chunk * silence_threshold: break
+            if vol >= self.volume_floor:
+                recording_started = True
+
+            if recording_started:
+                frames.append(data)
+                if vol < self.volume_floor:
+                    silence_counter += 1
+                else:
+                    silence_counter = 0
+
+                if silence_counter > self.rate // self.chunk * silence_threshold:
+                    break
 
         audio_data = b"".join(frames)
         
